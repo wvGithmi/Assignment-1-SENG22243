@@ -1,50 +1,52 @@
 package com.example.rest_api.activities
 
-import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.util.Log
+import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.rest_api.PostsAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.example.rest_api.R
-import com.example.rest_api.posts.models.Post
+import com.example.rest_api.helpers.PostsAdapter
+import com.example.rest_api.models.Post
+import com.example.rest_api.services.Posts_api
+import com.example.rest_api.services.Postsapi
+import retrofit2.Response
+import retrofit2.Call
+import retrofit2.Callback
+import kotlinx.android.synthetic.main.activity_main.*
+import retrofit2.http.POST
 
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(findViewById(R.id.toolbar))
-
-        val posts = mutableListOf<Post>()
-
-        for (i in 0..100) {
-            posts.add(
-                    Post( 1, 1, "Title", "Body")
-            )
-        }
-
-        recyclerView.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = PostsAdapter(posts)
-        }
-        /*findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-           Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                   .setAction("Action", null).show()
-        }*/
     }
 
-    /*override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
+    private fun viewPosts() {
+        val end  = Postsapi.buildPost(Posts_api::class.java)
+        val requestCall = end.getPostList()
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }*/
+        requestCall.enqueue(object : retrofit2.Callback<List<Post>> {
+            override fun onResponse(call: retrofit2.Call<List<Post>>, response: Response<List<Post>>) {
+                Log.d("Response", "onResponse: ${response.body()}")
+                if (response.isSuccessful){
+                    val countryList  = response.body()!!
+                    Log.d("Response", "countrylist size : ${countryList.size}")
+                    posts_recycler.apply {
+                        setHasFixedSize(true)
+                        layoutManager = LinearLayoutManager(this@MainActivity)
+                        adapter = PostsAdapter(response.body()!!)
+                        setAdapter(posts_recycler.adapter)
+                    }
+                }else{
+                    Toast.makeText(this@MainActivity, "Something went wrong ${response.message()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<List<Post>>, t: Throwable) {
+                Toast.makeText(this@MainActivity, "Something went wrong $t", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
 }

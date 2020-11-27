@@ -1,3 +1,10 @@
-package com.example.rest_api.posts.models
+package com.example.rest_api.models
 
-data class Post (var userId:Int, var id:Int, var title:String, var body:String)
+class Post : ArrayList<Post.PostItem>(){
+    data class PostItem(
+            val body: String,
+            val id: Int,
+            val title: String,
+            val userId: Int
+    )
+}
